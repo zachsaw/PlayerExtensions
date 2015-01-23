@@ -10,17 +10,14 @@ namespace Mpdn.PlayerExtensions
     {
         private readonly IDictionary<Keys, Action> m_Actions = new Dictionary<Keys, Action>();
 
-        protected IPlayerControl PlayerControl { get; private set; }
-
         public abstract ExtensionDescriptor Descriptor { get; }
 
         public abstract IList<Verb> Verbs { get; }
 
         #region Implementation
 
-        public virtual void Initialize(IPlayerControl playerControl)
+        public virtual void Initialize()
         {
-            PlayerControl = playerControl;
             PlayerControl.KeyDown += PlayerKeyDown;
 
             foreach (var verb in Verbs)

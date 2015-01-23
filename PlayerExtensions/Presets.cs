@@ -27,8 +27,6 @@ namespace Mpdn.PlayerExtensions.GitHub
 
         public RenderScriptPreset ActivePreset { get; set; }
 
-        public IPlayerControl PlayerControl;
-
         public PresetSettings()
         {
             PresetList = new List<RenderScriptPreset>();
@@ -58,11 +56,10 @@ namespace Mpdn.PlayerExtensions.GitHub
             get { return new Verb[] {}; }
         }
 
-        public override void Initialize(IPlayerControl playerControl)
+        public override void Initialize()
         {
-            base.Initialize(playerControl);
+            base.Initialize();
             Config = ScriptConfig.Config;
-            Config.PlayerControl = playerControl;
 
             ScriptConfig.Config.ActivePreset = LoadPreset(ScriptConfig.Config.ActivePreset.Guid) ?? ScriptConfig.Config.ActivePreset;
         }

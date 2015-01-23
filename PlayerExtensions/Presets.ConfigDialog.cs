@@ -9,7 +9,6 @@ namespace Mpdn.PlayerExtensions.GitHub
     public partial class PresetDialog : PresetDialogBase
     {
         private List<IRenderScriptUi> m_RenderScripts;
-        private IPlayerControl m_PlayerControl;
 
         public PresetDialog()
         {
@@ -21,10 +20,9 @@ namespace Mpdn.PlayerExtensions.GitHub
         public override void Setup(PresetSettings settings)
         {
             base.Setup(settings);
-            m_PlayerControl = settings.PlayerControl;
 
             m_RenderScripts = 
-                m_PlayerControl.RenderScriptAssemblies.SelectMany(a => a.GetTypes())
+                PlayerControl.RenderScriptAssemblies.SelectMany(a => a.GetTypes())
                 .Where(t => t.IsClass && !t.IsAbstract && t.IsPublic
                     && typeof(IRenderScriptUi).IsAssignableFrom(t)
                     && t.GetConstructor(Type.EmptyTypes) != null)

@@ -18,7 +18,6 @@ namespace Mpdn.PlayerExtensions.GitHub
         private const string INACTIVE_INDICATOR_STR = "[ ]";
 
         private bool m_FirstShow = true;
-        private IPlayerControl m_PlayerControl;
         private int m_CurrentIndex = -1;
         private Form m_OwnerForm;
 
@@ -30,13 +29,23 @@ namespace Mpdn.PlayerExtensions.GitHub
 
             openFileDialog.Filter = "Media files (all types) (*.avi; *.mp4; *.mkv; ...) |*.mkv;*.mp4;*.m4v;*.mp4v;*.3g2;*.3gp2;*.3gp;*.3gpp;*.mov;*.m2ts;*.ts;*.asf;*.wma;*.wmv;*.wm;*.asx,*.wax,*.wvx,*.wmx;*.wpl;*.dvr-ms;*.avi;*.mpg;*.mpeg;*.m1v;*.mp2;*.mp3;*.mpa;*.mpe;*.m3u;*.wav;*.mid;*.midi;*.rmi|All files (*.*)|*.*";
             Opacity = MIN_OPACITY;
+
+            Icon = PlayerControl.ApplicationIcon;
+            PlayerControl.PlaybackCompleted += PlaybackCompleted;
         }
 
-        public void SetPlayerControl(IPlayerControl playerControl)
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
         {
-            m_PlayerControl = playerControl;
-            Icon = m_PlayerControl.ApplicationIcon;
-            m_PlayerControl.PlaybackCompleted += PlaybackCompleted;
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+                PlayerControl.PlaybackCompleted -= PlaybackCompleted;
+            }
+            base.Dispose(disposing);
         }
 
         public void Show(Form owner)
@@ -83,7 +92,7 @@ namespace Mpdn.PlayerExtensions.GitHub
         public void OpenPlaylist()
         {
             openPlaylistDialog.FileName = savePlaylistDialog.FileName;
-            if (openPlaylistDialog.ShowDialog(m_PlayerControl.Form) != DialogResult.OK)
+            if (openPlaylistDialog.ShowDialog(PlayerControl.Form) != DialogResult.OK)
                 return;
 
             OpenPlaylist(openPlaylistDialog.FileName);
@@ -98,7 +107,7 @@ namespace Mpdn.PlayerExtensions.GitHub
             }
 
             savePlaylistDialog.FileName = openPlaylistDialog.FileName;
-            if (savePlaylistDialog.ShowDialog(m_PlayerControl.Form) != DialogResult.OK)
+            if (savePlaylistDialog.ShowDialog(PlayerControl.Form) != DialogResult.OK)
                 return;
 
             SavePlaylist(savePlaylistDialog.FileName);
@@ -133,34 +142,31 @@ namespace Mpdn.PlayerExtensions.GitHub
 
         public void AddFiles(IEnumerable<string> files, bool startPlaying)
         {
-            List<string> filesindir = new List<string>();
-            List<string> validfiles = new List<string>() {".avi", ".mpg", ".mpeg", ".mpe", ".m1v", ".m2v",
-            ".mpv2", ".mp2v", ".pva", ".evo", ".m2p", ".ts", ".tp", ".trp", ".m2t", ".m2ts", ".mts", ".rec",
-            ".vob", ".mkv", ".webm", ".mp4", ".m4v", ".mp4v", ".mpv4", ".hdmov", ".mov", ".3gp", ".3gpp", ".3g2",
-            ".3gp2", ".flv", ".f4v", ".ogm", ".ogv", ".rm", ".ram", ".rpm", ".rmm", ".rt", ".rp", ".smi",
-            ".smil", ".wmv", ".wmp", ".wm", ".asf", ".smk", ".bik", ".fli", ".flc", ".flic", ".dsm", ".dsv",
-            ".dsa", ".dss", ".ivf", ".swf", ".divx", ".rmvb", ".amv", ".ac3", ".dts", ".aif", ".aifc", ".aiff",
-            ".alac", ".amr", ".ape", ".apl", ".au", ".snd", ".cda", ".flac", ".m4a", ".m4b", ".aac", ".mid",
-            ".midi", ".rmi", ".mka", ".mp3", ".mpa", ".mp2", ".m1a", ".m2a", ".mpc", ".ofr", ".ofs", ".ogg",
-            ".oga", ".opus", ".ra", ".tak", ".tta", ".wav", ".wma", ".wv", ".aob", ".mlp", ".asx", ".m3u",
-            ".m3u8", ".pls", ".wvx", ".wax", ".wmx", ".mpcpl", ".mpls", ".bdmv"};
+            var filesindir = new List<string>();
+            var validfiles = new List<string> {
+                ".avi", ".mpg", ".mpeg", ".mpe", ".m1v", ".m2v",
+                ".mpv2", ".mp2v", ".pva", ".evo", ".m2p", ".ts", ".tp", ".trp", ".m2t", ".m2ts", ".mts", ".rec",
+                ".vob", ".mkv", ".webm", ".mp4", ".m4v", ".mp4v", ".mpv4", ".hdmov", ".mov", ".3gp", ".3gpp", ".3g2",
+                ".3gp2", ".flv", ".f4v", ".ogm", ".ogv", ".rm", ".ram", ".rpm", ".rmm", ".rt", ".rp", ".smi",
+                ".smil", ".wmv", ".wmp", ".wm", ".asf", ".smk", ".bik", ".fli", ".flc", ".flic", ".dsm", ".dsv",
+                ".dsa", ".dss", ".ivf", ".swf", ".divx", ".rmvb", ".amv", ".ac3", ".dts", ".aif", ".aifc", ".aiff",
+                ".alac", ".amr", ".ape", ".apl", ".au", ".snd", ".cda", ".flac", ".m4a", ".m4b", ".aac", ".mid",
+                ".midi", ".rmi", ".mka", ".mp3", ".mpa", ".mp2", ".m1a", ".m2a", ".mpc", ".ofr", ".ofs", ".ogg",
+                ".oga", ".opus", ".ra", ".tak", ".tta", ".wav", ".wma", ".wv", ".aob", ".mlp", ".asx", ".m3u",
+                ".m3u8", ".pls", ".wvx", ".wax", ".wmx", ".mpcpl", ".mpls", ".bdmv"};
             
             foreach (var file in files)
             {
                 if (Directory.Exists(file))
                 {
                     filesindir.AddRange(Directory.GetFiles(file));
-                    
-                    if (filesindir != null)
+                    filesindir.Sort();
+                    foreach (var fileindir in filesindir)
                     {
-                        filesindir.Sort();
-                        foreach (var fileindir in filesindir)
-                        {
-                            var extensionindir = Path.GetExtension(fileindir);
-                            if (extensionindir != null && validfiles.Contains(extensionindir.ToLower()))
-                                listBox.Items.Add(new PlaylistItem(fileindir));
+                        var extensionindir = Path.GetExtension(fileindir);
+                        if (extensionindir != null && validfiles.Contains(extensionindir.ToLower()))
+                            listBox.Items.Add(new PlaylistItem(fileindir));
 
-                        }
                     }
                     continue;
                 }
@@ -174,8 +180,8 @@ namespace Mpdn.PlayerExtensions.GitHub
             if (!startPlaying || listBox.Items.Count == 0)
                 return;
 
-            if (m_PlayerControl.PlayerState != PlayerState.Closed &&
-                m_PlayerControl.PlayerState != PlayerState.Stopped)
+            if (PlayerControl.PlayerState != PlayerState.Closed &&
+                PlayerControl.PlayerState != PlayerState.Stopped)
                 return;
 
             m_CurrentIndex = -1;
@@ -187,10 +193,10 @@ namespace Mpdn.PlayerExtensions.GitHub
 
         private void PlaybackCompleted(object sender, EventArgs e)
         {
-            if (m_PlayerControl.PlayerState == PlayerState.Closed)
+            if (PlayerControl.PlayerState == PlayerState.Closed)
                 return;
 
-            if (m_PlayerControl.MediaPosition == m_PlayerControl.MediaDuration)
+            if (PlayerControl.MediaPosition == PlayerControl.MediaDuration)
             {
                 PlayNext();
             }
@@ -215,12 +221,12 @@ namespace Mpdn.PlayerExtensions.GitHub
             try
             {
                 var item = ((PlaylistItem)listBox.Items[m_CurrentIndex]);
-                m_PlayerControl.OpenMedia(item.FilePath);
+                PlayerControl.OpenMedia(item.FilePath);
                 item.Active = true;
             }
             catch (Exception ex)
             {
-                m_PlayerControl.HandleException(ex);
+                PlayerControl.HandleException(ex);
                 PlayNext();
             }
             listBox.Invalidate();
@@ -245,9 +251,9 @@ namespace Mpdn.PlayerExtensions.GitHub
             if (!Visible)
                 return;
 
-            if (m_OwnerForm != m_PlayerControl.Form)
+            if (m_OwnerForm != PlayerControl.Form)
             {
-                Show(m_PlayerControl.Form);
+                Show(PlayerControl.Form);
             }
         }
 

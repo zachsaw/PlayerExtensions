@@ -1,11 +1,8 @@
-﻿using Mpdn;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
@@ -67,15 +64,15 @@ namespace Mpdn.PlayerExtensions
             serverSocket.Close();
         }
 
-        public override void Initialize(IPlayerControl playerControl)
+        public override void Initialize()
         {
-            base.Initialize(playerControl);
+            base.Initialize();
+
             context = WindowsFormsSynchronizationContext.Current;
-            m_PlayerControl = playerControl;
-            m_PlayerControl.PlaybackCompleted += m_PlayerControl_PlaybackCompleted;
-            m_PlayerControl.PlayerStateChanged += m_PlayerControl_PlayerStateChanged;
-            m_PlayerControl.EnteringFullScreenMode += m_PlayerControl_EnteringFullScreenMode;
-            m_PlayerControl.ExitingFullScreenMode += m_PlayerControl_ExitingFullScreenMode;
+            PlayerControl.PlaybackCompleted += m_PlayerControl_PlaybackCompleted;
+            PlayerControl.PlayerStateChanged += m_PlayerControl_PlayerStateChanged;
+            PlayerControl.EnteringFullScreenMode += m_PlayerControl_EnteringFullScreenMode;
+            PlayerControl.ExitingFullScreenMode += m_PlayerControl_ExitingFullScreenMode;
             clientManager = new RemoteClients(this);
             Task.Factory.StartNew(Server);
         }
@@ -373,12 +370,7 @@ namespace Mpdn.PlayerExtensions
 
         private void DisplayTextMessage(object msg)
         {
-            m_PlayerControl.ShowOsdText(msg.ToString());
-            //This is a temporary workaround as ShowOsdText doesn't seem to auto hide OSD text
-            hideTimer = new System.Timers.Timer(1000);
-            hideTimer.Elapsed += hideTimer_Elapsed;
-            hideTimer.AutoReset = false;
-            hideTimer.Start();
+            m_PlayerControl.VideoPanel.BeginInvoke((MethodInvoker) (() => m_PlayerControl.ShowOsdText(msg.ToString())));
         }
 
         void hideTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
